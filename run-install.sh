@@ -277,6 +277,7 @@ function install_homebrew () {
       /bin/bash -c "$(curl -fsSL $brew_url)"
       export PATH="/usr/local/bin:$PATH"
       echo "eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"" >> ~/.zshrc
+      echo "eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"" >> ~/.bashrc
 
       # Ask if i want to install the libs in the brewfile after installing homebrew
       echo -e "\n${CYAN_B}Would you like to install Homebrew global libraries? (y/N)${RESET}"
