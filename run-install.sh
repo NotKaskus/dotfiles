@@ -283,6 +283,7 @@ function install_homebrew () {
       echo -e "\n${CYAN_B}Would you like to install Homebrew global libraries? (y/N)${RESET}"
       read -t $PROMPT_TIMEOUT -n 1 -r ans_homebrewupdt
       if [[ $ans_homebrewupdt =~ ^[Yy]$ ]] || [[ $AUTO_YES = true ]] ; then
+        test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         if [ -f "$DOTFILES_DIR/scripts/installs/Brewfile" ] && command_exists brew; then
           echo -en "🍺 ${PURPLE}Installing libraries...${RESET}\n"
           brew bundle --global --file $DOTFILES_DIR/scripts/installs/Brewfile # Install all listed Brew apps
