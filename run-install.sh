@@ -306,7 +306,7 @@ function install_homebrew () {
         echo -en "🍺 ${PURPLE}Updating brew to latest version...${RESET}\n"
         brew update # Update Brew to latest version
         echo -en "🍺 ${PURPLE}Installing libraries...${RESET}\n"
-        brew bundle --global --file $HOME/.Brewfile # Install all listed Brew apps
+        brew bundle --global --file $DOTFILES_DIR/scripts/installs/Brewfile # Install all listed Brew apps
         brew cleanup # Remove stale lock files and outdated downloads
         killall Finder # Restart finder (required for some apps)
       else
