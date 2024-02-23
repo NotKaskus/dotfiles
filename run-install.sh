@@ -276,14 +276,15 @@ function install_homebrew () {
       brew_url='https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh'
       /bin/bash -c "$(curl -fsSL $brew_url)"
       export PATH="/usr/local/bin:$PATH"
-      echo "eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"" >> ~/.zshrc
-      echo "eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"" >> ~/.bashrc
 
       # Ask if i want to install the libs in the brewfile after installing homebrew
       echo -e "\n${CYAN_B}Would you like to install Homebrew global libraries? (y/N)${RESET}"
       read -t $PROMPT_TIMEOUT -n 1 -r ans_homebrewupdt
       if [[ $ans_homebrewupdt =~ ^[Yy]$ ]] || [[ $AUTO_YES = true ]] ; then
+        test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
         test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        echo "eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"" >> ~/.zshrc
+        echo "eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"" >> ~/.bashrc
         if [ -f "$DOTFILES_DIR/scripts/installs/Brewfile" ] && command_exists brew; then
           echo -en "🍺 ${PURPLE}Installing libraries...${RESET}\n"
           brew bundle --global --file $DOTFILES_DIR/scripts/installs/Brewfile # Install all listed Brew apps
