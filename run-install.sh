@@ -188,21 +188,17 @@ function pre_setup_tasks () {
 function setup_dot_files () {
   # If dotfiles not yet present, clone the repo
   if [[ ! -d "$DOTFILES_DIR" ]]; then
-    echo -e "${PURPLE}Dotfiles not yet present."\
-    "Downloading ${REPO_NAME} into ${DOTFILES_DIR}${RESET}"
-    echo -e "${YELLOW_B}You can change where dotfiles will be saved to,"\
-    "by setting the DOTFILES_DIR env var${RESET}"
-    mkdir -p "${DOTFILES_DIR}" && \
-    git clone --force --recursive ${DOTFILES_REPO} ${DOTFILES_DIR} && \
-    cd "${DOTFILES_DIR}" && \
-    echo -e "${PURPLE}Updating submodules${RESET}" && \
-    git submodule update --recursive --remote --init
+    echo -e "${PURPLE}Dotfiles not yet present. Downloading %s into %s${RESET}\n" "$REPO_NAME" "$DOTFILES_DIR"
+    echo -e "${YELLOW_B}You can change where dotfiles will be saved to, by setting the DOTFILES_DIR env var${RESET}\n"
+    mkdir -p "${DOTFILES_DIR}"
+    git clone --force --recursive "${DOTFILES_REPO}" "${DOTFILES_DIR}"
+    echo -e "${PURPLE}Updating submodules${RESET}\n"
+    git -C "${DOTFILES_DIR}" submodule update --recursive --remote --init
   else # Dotfiles already downloaded, just fetch latest changes
-    echo -e "${PURPLE}Pulling changes from ${REPO_NAME} into ${DOTFILES_DIR}${RESET}"
-    cd "${DOTFILES_DIR}" && \
-    git pull origin main --force && \
-    echo -e "${PURPLE}Updating submodules${RESET}" && \
-    git submodule update --recursive --remote --init
+    echo -e "${PURPLE}Pulling changes from %s into %s${RESET}\n" "$REPO_NAME" "$DOTFILES_DIR"
+    git -C "${DOTFILES_DIR}" pull origin main --force
+    echo -e "${PURPLE}Updating submodules${RESET}\n"
+    git -C "${DOTFILES_DIR}" submodule update --recursive --remote --init
   fi
 
   # If git clone / pull failed, then exit with error
@@ -212,8 +208,7 @@ function setup_dot_files () {
   fi
 
   # Set up symlinks with dotbot
-  echo -e "${PURPLE}Setting up Symlinks${RESET}"
-  cd "${DOTFILES_DIR}"
+  echo -e "${PURPLE}Setting up Symlinks${RESET}\n"
   git -C "${DOTBOT_DIR}" submodule sync --quiet --recursive
   git submodule update --init --recursive "${DOTBOT_DIR}"
   chmod +x  lib/dotbot/bin/dotbot
