@@ -27,13 +27,21 @@ The install script [does several things](#-content), it takes care of checking d
 
 ## 📦 Content
 
-- `zsh/` - [Zsh](https://www.zsh.org/) config with [Oh My Zsh](https://ohmyz.sh/), includes aliases for Git, Debian, and [TheFuck](https://github.com/nvbn/thefuck)
-  - `oh-my-zsh` - [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions), [zsh-autocomplete](https://github.com/marlonrichert/zsh-autocomplete) plugins. [(See all plugins)](https://github.com/NotKaskus/dotfiles/blob/main/run-install.sh)
-  - `oh-my-posh` - For that [beautiful terminal](https://github.com/JanDeDobbeleer/oh-my-posh/) look.
-  - `brew` - Using [homebrew](https://github.com/Homebrew/brew) to install libs that are not available on ubuntu apt-install.
-- `nvim/` - Use [Nvchad](https://nvchad.com/) plugin cause why not?
-- `dotbot/` - [Dotbot](https://github.com/anishathalye/dotbot) repository managing this dotfiles.
-- `tmux/` - Use [Tpm](https://github.com/tmux-plugins/tpm) for installing tmux plugins.
+- `config/` - Contains configuration files for various tools and environments.
+  - `general/` - General configuration files like `.bashrc`, `.curlrc`, `.gitconfig`, etc.
+  - `gnome/` - Configuration files for [GNOME](https://extensions.gnome.org/).
+  - `nvim/` - Configuration files for [Neovim](https://github.com/NvChad/NvChad).
+  - `tmux/` - Configuration files for [Tmux](https://github.com/tmux/tmux/).
+  - `vim/` - Configuration files for [Vim](https://www.vim.org/).
+  - `zsh/` - Configuration files for [Zsh](https://github.com/robbyrussell/oh-my-zsh).
+- `lets-go.sh` - Shell script to check if required lib such as [git](https://git-scm.com/) is installed.
+- `lib/` - Contains libraries.
+  - `dotbot/` - [Dotbot](https://github.com/anishathalye/dotbot) for managing dotfiles.
+  - `tpm/` - [Tpm](https://github.com/tmux-plugins/tpm) for managing Tmux plugins.
+- `run-install.sh` - Shell script for installation.
+- `scripts/` - Contains various utility scripts.
+- `symlinks.yaml` - YAML file for managing symbolic links using [dotbot](https://github.com/tmux-plugins/tpm).
+- `utils/` - Contains utility scripts like `am-i-online.sh`, `color-map.sh`, `death-to-dotfiles.sh`, etc.
 
 ## ⁉️ Issues
 
