@@ -4,7 +4,7 @@
 PARAMS=$* # User-specified parameters
 CURRENT_DIR=$(cd "$(dirname ${BASH_SOURCE[0]})" && pwd)
 SYSTEM_TYPE=$(uname -s) # Get system type - Linux / MacOS (Darwin)
-PROMPT_TIMEOUT=15 # When user is prompted for input, skip after x seconds
+PROMPT_TIMEOUT=30 # When user is prompted for input, skip after x seconds
 START_TIME=`date +%s` # Start timer
 SRC_DIR=$(dirname ${0})
 
@@ -59,40 +59,7 @@ make_intro () {
   C3="\x1b[2m"
   echo -e "${CYAN_B}The seup script will do the following:${RESET}\n"\
   "${C2}(1) Pre-Setup Tasls\n"\
-  "  ${C3}- Check that all requirements are met, and system is compatible\n"\
-  "  ${C3}- Sets environmental variables from params, or uses sensible defaults\n"\
-  "  ${C3}- Output welcome message and summary of changes\n"\
-  "${C2}(2) Setup Dotfiles\n"\
-  "  ${C3}- Clone or update dotfiles from git\n"\
-  "  ${C3}- Symlinks dotfiles to correct locations\n"\
-  "${C2}(3) Install packages\n"\
-  "  ${C3}- Prompt to install Homebrew if not present\n"\
-  "  ${C3}- Updates and installs apps liseted in Brewfile\n"\
-  "  ${C3}- Updates and installs packages via apt get\n"\
-  "  ${C3}- Checks that OS is up-to-date and critical patches are installed\n"\
-  "${C2}(4) Configure system\n"\
-  "  ${C3}- Setup Tmux, and install / update Tmux plugins via TPM\n"\
-  "  ${C3}- Setup ZSH, and install / update ZSH plugins via Antigen\n"\
-  "  ${C3}- Apply system settings (via dconf on Linux)\n"\
-  "${C2}(5) Finishing Up\n"\
-  "  ${C3}- Refresh current terminal session\n"\
-  "  ${C3}- Print summary of applied changes and time taken\n"\
-  "  ${C3}- Exit with appropriate status code\n\n"\
-  "${PURPLE}You will be prompted at each stage, before any changes are made.${RESET}\n"\
-  "${PURPLE}For more info, see GitHub: \033[4;35mhttps://github.com/${REPO_NAME}${RESET}"
-}
-
-# Cleanup tasks, run when the script exits
-cleanup () {
-  # Reset tab color and title (iTerm2 only)
-  echo -e "\033];\007\033]6;1;bg;*;default\a"
-
-  # Unset re-used variables
-  unset PROMPT_TIMEOUT
-  unset AUTO_YES
-
-  # dinosaurs are awesome
-  echo "🦖"
+  "  ${C3}- Change Me Later\n"
 }
 
 # Checks if a given package is installed
@@ -119,16 +86,6 @@ system_verify () {
   fi
 }
 
-# Shows a desktop notification, on compatible systems ($1 = message)
-show_notification () {
-  if [[ $PARAMS == *"--no-notifications"* ]]; then return; fi
-  notif_title=$TITLE
-  notif_logo="${DOTFILES_DIR}/.github/logo.png"
-  if command_exists notify-send; then
-    notify-send -u normal -t 15000 -i "${notif_logo}" "${notif_title}" "${1}"
-  fi
-}
-
 # Prints welcome banner, verifies that requirements are met
 function pre_setup_tasks () {
   # Show pretty starting banner
@@ -152,13 +109,9 @@ function pre_setup_tasks () {
   fi
   echo
 
-  # If pre-requsite packages not found, prompt to install
-  if ! command_exists git; then
-    bash <(curl -s  -L 'https://raw.githubusercontent.com/NotKaskus/dotfiles/main/scripts/installs/prerequisites.sh') $PARAMS
-  fi
-
   # Verify required packages are installed
   system_verify "git" true
+  system_verify "brew" true
   system_verify "zsh" false
   system_verify "vim" false
   system_verify "nvim" false
@@ -191,14 +144,14 @@ function setup_dot_files () {
     echo -e "${PURPLE}Dotfiles not yet present. Downloading %s into %s${RESET}\n" "$REPO_NAME" "$DOTFILES_DIR"
     echo -e "${YELLOW_B}You can change where dotfiles will be saved to, by setting the DOTFILES_DIR env var${RESET}\n"
     mkdir -p "${DOTFILES_DIR}"
-    git clone --force --recursive "${DOTFILES_REPO}" "${DOTFILES_DIR}"
-    echo -e "${PURPLE}Updating submodules${RESET}\n"
-    git -C "${DOTFILES_DIR}" submodule update --recursive --remote --init
+    git clone --force --recursive "${DOTFILES_REPO}" "${DOTFILES_DIR}" && \
+    cd "${DOTFILES_DIR}"
   else # Dotfiles already downloaded, just fetch latest changes
-    echo -e "${PURPLE}Pulling changes from %s into %s${RESET}\n" "$REPO_NAME" "$DOTFILES_DIR"
-    git -C "${DOTFILES_DIR}" pull origin main --force
-    echo -e "${PURPLE}Updating submodules${RESET}\n"
-    git -C "${DOTFILES_DIR}" submodule update --recursive --remote --init
+    echo -e "${PURPLE}Pulling changes from ${REPO_NAME} into ${DOTFILES_DIR}${RESET}"
+    cd "${DOTFILES_DIR}" && \
+    git pull origin master && \
+    echo -e "${PURPLE}Updating submodules${RESET}" && \
+    git submodule update --recursive --remote --init
   fi
 
   # If git clone / pull failed, then exit with error
@@ -208,7 +161,8 @@ function setup_dot_files () {
   fi
 
   # Set up symlinks with dotbot
-  echo -e "${PURPLE}Setting up Symlinks${RESET}\n"
+  echo -e "${PURPLE}Setting up Symlinks${RESET}"
+  cd "${DOTFILES_DIR}"
   git -C "${DOTBOT_DIR}" submodule sync --quiet --recursive
   git submodule update --init --recursive "${DOTBOT_DIR}"
   chmod +x  lib/dotbot/bin/dotbot
@@ -246,72 +200,6 @@ function apply_preferences () {
     echo -e "${PURPLE}Installing ZSH Plugins${RESET}"
     /bin/zsh -i -c "antigen update && antigen-apply"
   fi
-
-  # Apply general system, app and OS security preferences (prompt user first)
-  # echo -e "\n${CYAN_B}Would you like to apply system preferences? (y/N)${RESET}"
-  # read -t $PROMPT_TIMEOUT -n 1 -r ans_syspref
-  # if [[ $ans_syspref =~ ^[Yy]$ ]] || [[ $AUTO_YES = true ]]; then
-  #   if [ "$SYSTEM_TYPE" = "Darwin" ]; then
-  #     echo -e "\n${PURPLE}Applying MacOS system preferences,\
-  #     ensure you've understood before proceeding${RESET}\n"
-  #     macos_settings_dir="$DOTFILES_DIR/scripts/macos-setup"
-  #     for macScript in "macos-security.sh" "macos-preferences.sh" "macos-apps.sh"; do
-  #       chmod +x $macos_settings_dir/$macScript && \
-  #       $macos_settings_dir/$macScript --quick-exit --yes-to-all
-  #     done
-  #   fi
-  #   echo -e "\n${PURPLE}Applying preferences to GNOME apps, ensure you've understood before proceeding${RESET}\n"
-  #   dconf_script="$DOTFILES_DIR/scripts/linux/dconf-prefs.sh"
-  #   chmod +x $dconf_script && $dconf_script
-  # fi
-}
-
-# Homebrew not installed, ask user if they'd like to download it now
-function install_homebrew () {
-  if ! command_exists brew; then
-    echo -e "\n${CYAN_B}Would you like to install Homebrew and brew global libraries? (y/N)${RESET}"
-    read -t $PROMPT_TIMEOUT -n 1 -r ans_homebrewins
-    if [[ $ans_homebrewins =~ ^[Yy]$ ]] || [[ $AUTO_YES = true ]] ; then
-      echo -en "🍺 ${PURPLE}Installing Homebrew...${RESET}\n"
-      brew_url='https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh'
-      /bin/bash -c "$(curl -fsSL $brew_url)"
-      export PATH="/usr/local/bin:$PATH"
-
-      # Ask if i want to install the libs in the brewfile after installing homebrew
-      echo -e "\n${CYAN_B}Would you like to install Homebrew global libraries? (y/N)${RESET}"
-      read -t $PROMPT_TIMEOUT -n 1 -r ans_homebrewupdt
-      if [[ $ans_homebrewupdt =~ ^[Yy]$ ]] || [[ $AUTO_YES = true ]] ; then
-        test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
-        test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-        echo "eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"" >> ~/.zshrc
-        echo "eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\"" >> ~/.bashrc
-        if [ -f "$DOTFILES_DIR/scripts/installs/Brewfile" ] && command_exists brew; then
-          echo -en "🍺 ${PURPLE}Installing libraries...${RESET}\n"
-          brew bundle --global --file $DOTFILES_DIR/scripts/installs/Brewfile # Install all listed Brew apps
-          brew cleanup # Remove stale lock files and outdated downloads
-          killall Finder # Restart finder (required for some apps)
-        else
-          echo -e "${PURPLE}Skipping Installation of Homebrew libraries as requirements not met${RESET}"
-        fi
-      fi
-    fi
-  else
-    # If homebrew is already installed still ask the user if they want to install the libs in the brew file
-    echo -e "\n${CYAN_B}Would you like to install Update Homebrew and install global libraries? (y/N)${RESET}"
-    read -t $PROMPT_TIMEOUT -n 1 -r ans_homebrewupdt
-    if [[ $ans_homebrewupdt =~ ^[Yy]$ ]] || [[ $AUTO_YES = true ]]; then
-      if [ -f "$DOTFILES_DIR/scripts/installs/Brewfile" ]; then
-        echo -en "🍺 ${PURPLE}Updating brew to latest version...${RESET}\n"
-        brew update # Update Brew to latest version
-        echo -en "🍺 ${PURPLE}Installing libraries...${RESET}\n"
-        brew bundle --global --file $DOTFILES_DIR/scripts/installs/Brewfile # Install all listed Brew apps
-        brew cleanup # Remove stale lock files and outdated downloads
-        killall Finder # Restart finder (required for some apps)
-      else
-        echo -e "${PURPLE}Skipping update/installation of Homebrew & libraries as requirements not met${RESET}"
-      fi
-    fi
-  fi
 }
 
 # Based on system type, uses appropriate package manager to install / updates apps
@@ -322,27 +210,13 @@ function install_packages () {
     echo -e "\n${PURPLE}Skipping package installs${RESET}"
     return
   fi
-
-  # Install and setup homebrew
-  install_homebrew
-
-  if [ -f "/etc/arch-release" ]; then
-    # Arch Linux
-    arch_pkg_install_script="${DOTFILES_DIR}/scripts/installs/arch-pacman.sh"
-    chmod +x $arch_pkg_install_script
-    $arch_pkg_install_script $PARAMS
-  elif [ -f "/etc/debian_version" ]; then
+  if [ -f "/etc/debian_version" ]; then
     # Debian / Ubuntu
     debian_pkg_install_script="${DOTFILES_DIR}/scripts/installs/debian-apt.sh"
     chmod +x $debian_pkg_install_script
     $debian_pkg_install_script $PARAMS
   fi
-  # If running in Linux desktop mode, prompt to install desktop apps via Flatpak
-  flatpak_script="${DOTFILES_DIR}/scripts/installs/flatpak.sh"
-  if [[ $SYSTEM_TYPE == "Linux" ]] && [ ! -z $XDG_CURRENT_DESKTOP ] && [ -f $flatpak_script ]; then
-    chmod +x $flatpak_script
-    $flatpak_script $PARAMS
-  fi
+	# TODO: Add support for windows installation
 }
 
 # Updates current session, and outputs summary
@@ -373,9 +247,6 @@ function finishing_up () {
   # Bye
   exit 0
 }
-
-# Trigger cleanup on exit
-trap cleanup EXIT
 
 # If --help flag passed in, just show the help menu
 if [[ $PARAMS == *"--help"* ]]; then

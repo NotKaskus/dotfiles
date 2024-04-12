@@ -1,4 +1,3 @@
-
 #  ~/.zlogin
 
 clear

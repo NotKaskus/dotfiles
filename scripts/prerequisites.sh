@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 
-# List of apps to install
-core_packages=(
-  'git' # Needed to fetch dotfiles
-  'vim' # Needed to edit files
-  'zsh' # Needed as bash is crap
-)
-
 # Color variables
 PURPLE='\033[0;35m'
 YELLOW='\033[0;93m'
 LIGHT='\x1b[2m'
 RESET='\033[0m'
+
+# List of apps to install
+core_packages=(
+  'git' # Needed to fetch dotfiles
+  'vim' # Needed to edit files
+  'zsh' # Needed as bash is crap
+  'fish' # Needed as bash is crap
+  'cargo' # Needed for Rust
+)
 
 # Shows help menu / introduction
 function print_usage () {
@@ -24,31 +26,50 @@ function print_usage () {
 
 function install_debian () {
   echo -e "${PURPLE}Installing ${1} via apt-get${RESET}"
+  sudo apt update && sudo apt upgrade -y
   sudo apt install $1
 }
 
-function install_arch () {
-  echo -e "${PURPLE}Installing ${1} via Pacman${RESET}"
-  sudo pacman -S $1
+function install_windows () {
+	if ! hash choco 2> /dev/null; then
+		echo -e "${PURPLE}Chocolatey is not installed, installing now...${RESET}"
+		/bin/bash -c "$(curl -fsSL https://chocolatey.org/install.sh)"
+	fi
+
+	echo -e "${PURPLE}Installing ${1} via choco${RESET}"
+	choco install $1
 }
 
-function get_homebrew () {
-  echo -e "${PURPLE}Setting up Homebrew${RESET}"
+# Install NVM - Node Version Manager
+if ! hash nvm 2> /dev/null; then
+  echo -e "${PURPLE}Installing nvm via curl${RESET}"
+  bash -c "$(curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh)"
+else
+  echo -e "${YELLOW}${app} is already installed, skipping${RESET}"
+fi
+
+# Install Brew - Package manager for MacOS/Linux
+if ! hash brew 2> /dev/null; then
+  echo -e "${PURPLE}Installing homebrew via curl${RESET}"
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  eval "\$($(brew --prefix)/bin/brew shellenv)"
-  export PATH=/usr/local/bin:$PATH
-}
+else
+  echo -e "${YELLOW}Brew is already installed, skipping${RESET}"
+  
+  export HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
+  export HOMEBREW_CELLAR="/home/linuxbrew/.linuxbrew/Cellar"
+  export HOMEBREW_REPOSITORY="/home/linuxbrew/.linuxbrew/Homebrew"
+  export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+fi
 
 # Detect OS type, then triggers install using appropriate package manager
 function multi_system_install () {
   app=$1
-  if ! hash brew 2> /dev/null; then get_homebrew; fi
-  if [ -f "/etc/arch-release" ] && hash pacman 2> /dev/null; then 
-    install_arch $app # Arch Linux via Pacman
-  elif ! [ -f "/etc/debian_version" ] && hash apt 2> /dev/null; then
+  if [ -f "/etc/debian_version" ] && hash apt 2> /dev/null; then
     install_debian $app # Debian via apt-get
+  elif [[ "$(uname)" == MINGW* ]]; then
+    install_windows $app # Windows via choco or some other package manager
   else
-    echo -e "${YELLOW}Skipping ${app}, as couldn't detect system type ${RESET}"
+		echo -e "${YELLOW}Skipping ${app}, as couldn't detect system type ${RESET}"
   fi
 }
 
@@ -77,5 +98,5 @@ for app in ${core_packages[@]}; do
 done
 
 # All done
-echo -e "\n${PURPLE}Jobs complete, exiting${RESET}"
+echo -e "\n${PURPLE}Jobs complete, exiting...${RESET}"
 exit 0
