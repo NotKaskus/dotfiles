@@ -3,59 +3,33 @@
 # Apps to be installed via apt-get
 debian_apps=(
   # Essentials
-  'git'           # Version controll
+  'git'           # Version control
   'neovim'        # Text editor
   'ranger'        # Directory browser
   'tmux'          # Term multiplexer
   'wget'          # Download files
 
   # CLI Power Basics
-  'aria2'         # Resuming download util (better wget)
-  'bat'           # Output highlighting (better cat)
-  'broot'         # Interactive directory navigation
   'ctags'         # Indexing of file info + headers
-  'diff-so-fancy' # Readable file compares (better diff)
-  'duf'           # Get info on mounted disks (better df)
   'exa'           # Listing files with info (better ls)
   'fzf'           # Fuzzy file finder and filtering
-  'hyperfine'     # Benchmarking for arbitrary commands
-  'just'          # Powerful command runner (better make)
   'jq'            # JSON parser, output and query files
   'most'          # Multi-window scroll pager (better less)
-  'procs'         # Advanced process viewer (better ps)
-  'ripgrep'       # Searching within files (better grep)
   'scrot'         # Screenshots programmatically via CLI
-  'sd'            # RegEx find and replace (better sed)
   'thefuck'       # Auto-correct miss-typed commands
-  'tealdeer'      # Reader for command docs (better man)
   'tree'          # Directory listings as tree structure
-  'tokei'         # Count lines of code (better cloc)
-  'trash-cli'     # Record and restore removed files
   'xsel'          # Copy paste access to the X clipboard
-  'zoxide'        # Auto-learning navigation (better cd)
+  'rip'           # Deletion tool (better rm)
 
   # Languages, compilers, runtimes, etc
-  'golang'
-  # 'gcc'            # GNU C++ compilers
-  # 'lua'            # Lua interpreter
-  # 'luarocks'       # Package manager for Lua
-  # 'node'           # Node.js
-  # 'nvm'            # Switching node versions
-  # 'openjdk'        # Java development kit
-  # 'python'         # Python interpreter
-  # 'rust'           # Rust language
+  'node'           # Node.js
+  'nvm'            # Switching node versions
 
   # Security Utilities
-  'clamav'        # Open source virus scanning suite
-  'cryptsetup'    # Reading / writing encrypted volumes
-  'gnupg'         # PGP encryption, signing and verifying
-  'git-crypt'     # Transparent encryption for git repos
-  'lynis'         # Scan system for common security issues
   'openssl'       # Cryptography and SSL/TLS Toolkit
   'rkhunter'      # Search / detect potential root kits
 
   # Monitoring, management and stats
-  'btop'          # Live system resource monitoring
   'bmon'          # Bandwidth utilization monitor
   'ctop'          # Container metrics and monitoring
   'glances'       # Resource monitor + web and API
@@ -69,6 +43,28 @@ debian_apps=(
   'neofetch'      # Show off distro and system info
 )
 
+declare -A additional_apps
+
+additional_apps=(
+  "aria2"
+  "broot"
+  "diff-so-fancy"
+  "bat"
+  "just"
+  "zoxide"
+  "tealdeer"
+  "hyperfine"
+  "procs"
+  "ripgrep"
+  "sd"
+  "tokei"
+  "trash-cli"
+  "clamav"
+  "cryptsetup"
+  "gnupg"
+  "starship"
+)
+
 ubuntu_repos=(
   'main'
   'universe'
@@ -80,11 +76,6 @@ debian_repos=(
   'main'
   'contrib'
 )
-
-# Following packages not found by apt, need to fix:
-# aria2, bat, broot, diff-so-fancy, duf, hyperfine,
-# just, procs, ripgrep, sd, tealdeer, tokei, trash-cli,
-# zoxide, clamav, cryptsetup, gnupg, lynis, btop, gping.
 
 # Colors
 PURPLE='\033[0;35m'
@@ -102,7 +93,8 @@ if [[ $* == *"--auto-yes"* ]]; then
 fi
 
 # Print intro message
-echo -e "${PURPLE}Starting Debian/ Ubuntu package install & update script"
+# TODO: Add windows support soon
+echo -e "${PURPLE}Starting Debian / Ubuntu package install & update script"
 echo -e "${YELLOW}Before proceeding, ensure your happy with all the packages listed in \e[4m${0##*/}"
 echo -e "${RESET}"
 
@@ -122,6 +114,10 @@ if ! hash apt 2> /dev/null; then
   echo "${YELLOW_B}apt doesn't seem to be present on your system. Exiting...${RESET}"
   exit 1
 fi
+
+# Update apt-get
+echo -e "${PURPLE}Updating apt-get...${RESET}"
+sudo apt update && sudo apt upgrade -y
 
 # Enable upstream package repositories
 echo -e "${CYAN_B}Would you like to enable listed repos? (y/N)${RESET}\n"
@@ -182,24 +178,37 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   for app in ${debian_apps[@]}; do
     if hash "${app}" 2> /dev/null; then
       echo -e "${YELLOW}[Skipping]${LIGHT} ${app} is already installed${RESET}"
-    elif hash flatpak 2> /dev/null && [[ ! -z $(echo $(flatpak list --columns=ref | grep $app)) ]]; then
-      echo -e "${YELLOW}[Skipping]${LIGHT} ${app} is already installed via Flatpak${RESET}"
     else
       echo -e "${PURPLE}[Installing]${LIGHT} Downloading ${app}...${RESET}"
       sudo apt install ${app} --assume-yes
     fi
   done
-
-  # Install Oh My Posh
-  if hash oh-my-posh 2>/dev/null; then
-    echo -e "${YELLOW}[Skipping]${LIGHT} Oh My Posh is already installed${RESET}"
-  else
-    # Install Oh My Posh
-    echo -e "${PURPLE}[Installing]${LIGHT} Downloading Oh My Posh...${RESET}"
-    brew install jandedobbeleer/oh-my-posh/oh-my-posh
-  fi
 fi
 
-echo -e "${PURPLE}Finished installing / updating Debian packages.${RESET}"
+# Prompt user to install all listed apps
+echo -e "${CYAN_B}Would you like to install additional apps? (y/N)${RESET}\n"
+read -t $PROMPT_TIMEOUT -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  echo -e "${PURPLE}Starting install...${RESET}"
+  # Install NVM
+  if hash "nvm" 2> /dev/null; then
+    echo -e "${YELLOW}[Skipping]${LIGHT} NVM is already installed${RESET}"
+  else
+    echo -e "${PURPLE}[Installing]${LIGHT} Downloading NVM...${RESET}"
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+  fi
+
+  for software in "${!additional_apps[@]}"; do
+    if hash "${software}" 2> /dev/null; then
+      echo -e "${YELLOW}[Skipping]${LIGHT} ${software} is already installed${RESET}"
+    else
+      echo -e "${PURPLE}[Installing]${LIGHT} Downloading ${software}...${RESET}"
+      brew install "${software}"
+    fi
+  done
+fi
+
+echo -e "${PURPLE}Finished installing / updating Debian/Ubuntu packages.${RESET}"
 
 # EOF
