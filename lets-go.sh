@@ -17,6 +17,7 @@ core_packages=(
   'vim' # Needed to edit files
   'zsh' # Needed as bash is crap
   'fish' # Needed as bash is crap
+  'brew' # Needed as bash is crap
 )
 
 for package in "${core_packages[@]}"; do
