@@ -30,7 +30,7 @@ done
 # If any command is missing, run the installation script
 if [ "$any_missing" = true ]; then
     echo "One or more commands are missing, installing prerequisites..."
-    bash <(curl -s -L 'https://raw.githubusercontent.com/NotKaskus/dotfiles/main/scripts/installs/prerequisites.sh')
+    bash <(curl -s  -L 'https://raw.githubusercontent.com/NotKaskus/dotfiles/main/scripts/installs/prerequisites.sh')
 else
     echo "All necessary commands are installed."
 fi
