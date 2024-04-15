@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-trap 'tput sgr0' exit # Clean up even if user hits ^C
-
 function setfg () {
     printf '\e[38;5;%dm' $1
 }
