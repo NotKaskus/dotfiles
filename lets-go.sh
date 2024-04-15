@@ -21,7 +21,7 @@ core_packages=(
 )
 
 for package in "${core_packages[@]}"; do
-  if ! command -v $package &> /dev/null; then
+  if ! hash $package 2> /dev/null; then
     echo "$package could not be found"
     bash <(curl -s  -L 'https://raw.githubusercontent.com/NotKaskus/dotfiles/main/scripts/installs/prerequisites.sh')
   fi
