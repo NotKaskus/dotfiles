@@ -53,6 +53,7 @@ if ! hash brew 2> /dev/null; then
   echo -e "${PURPLE}Installing homebrew via curl${RESET}"
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
+  (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> ~/.zshrc
   export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
 else
   echo -e "${YELLOW}Brew is already installed, skipping${RESET}"
