@@ -11,21 +11,29 @@ echo -e "\033[1;36m""NotKaskus/Dotfiles Installation Script 🧰
 - Into \033[4;36m${DOTFILES_DIR}\033[0;36m
 Be sure you've read and understood the what will be applied.\033[0m\n"
 
-# If dependencies not met, install them
-core_packages=(
-  'git' # Needed to fetch dotfiles
-  'vim' # Needed to edit files
-  'zsh' # Needed as bash is crap
-  'fish' # Needed as bash is crap
-  'brew' # Needed as bash is crap
-)
+# Core commands
+commands=("brew" "git" "curl" "bash" "fish" "vim" "zsh")
 
-for package in "${core_packages[@]}"; do
-  if ! hash $package 2> /dev/null; then
-    echo "$package could not be found"
-    bash <(curl -s  -L 'https://raw.githubusercontent.com/NotKaskus/dotfiles/main/scripts/installs/prerequisites.sh')
-  fi
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Check each command and update the flag if any are missing
+for cmd in "${commands[@]}"; do
+    if ! command_exists "$cmd"; then
+        echo "$cmd is not installed."
+        any_missing=true
+    fi
 done
+
+# If any command is missing, run the installation script
+if [ "$any_missing" = true ]; then
+    echo "One or more commands are missing, installing prerequisites..."
+    bash <(curl -s -L 'https://raw.githubusercontent.com/NotKaskus/dotfiles/main/scripts/installs/prerequisites.sh')
+else
+    echo "All necessary commands are installed."
+fi
 
 # If dotfiles not yet present then clone
 if [[ ! -d "$DOTFILES_DIR" ]]; then
