@@ -63,6 +63,6 @@ if ! command_exists brew || [ ! -d "/home/linuxbrew/.linuxbrew/bin" ]; then
       eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
   fi
 else
-	echo "${GREEN}Homebrew already installed, loading environment...${RESET}"
+	echo "${GREEN}Homebrew already installed, skipping...${RESET}"
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
