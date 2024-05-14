@@ -1,67 +1,50 @@
+# Global Git Configuration
+
 [user]
-    name = NotKaskus
-    email = NotKaskus@users.noreply.github.com
-    username = paulandrew
-
+	name = Paul Andrew
+	email = alicia@omg.lol
+	username = Kaskus
 [init]
-	defaultBranch = main
-
+	defaultBranch = master
 [pull]
 	rebase = false
-
-[alias]
-    co = checkout
-    ci = commit
-    st = status
-    br = branch
-    hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
-    type = cat-file -t
-    dump = cat-file -p
-
 [core]
-    editor = nvim
-    autocrlf = false
+	editor = nvim
+	whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
+	pager = delta
+	excludesfile = /Users/paulandrew/.config/.gitignore_global
+	autocrlf = false
 	symlinks = true
-    excludesfile = ~/.gitignore
-    whitespace = fix,-indent-with-non-tab,trailing-space,cr-at-eol
-    pager = delta
-
 [web]
-	browser = chrome
-
+	browser = firefox
 [instaweb]
 	httpd = apache2 -f
-
+[rerere]
+	enabled = 1
+	autoupdate = 1
 [color]
 	ui = auto
-
 [color "branch"]
 	current = yellow bold
 	local = purple bold
 	remote = cyan bold
-
 [color "diff"]
 	meta = yellow bold
 	frag = magenta bold
 	old = red bold
 	new = green bold
 	whitespace = red reverse
-
 [color "status"]
 	added = green bold
 	changed = yellow bold
 	untracked = red bold
-
 [diff]
 	tool = vimdiff
-
 [difftool]
 	prompt = false
-
 [delta]
 	features = line-numbers decorations
 	line-numbers = true
-
 [delta "decorations"]
 	minus-style = red bold normal
 	plus-style = green bold normal
@@ -76,13 +59,13 @@
 	minus-empty-line-marker-style = normal normal
 	plus-empty-line-marker-style = normal normal
 	line-numbers-right-format = "{np:^4}│ "
-
+# [github]
+	# user = lissy93
+	# token = token
 [gitflow "prefix"]
 	versiontag = v
-
 [sequence]
 	editor = interactive-rebase-tool
-
 [alias]
 	a = add --all
 	ai = add -i
@@ -153,7 +136,7 @@
 	ms = merge --skip
 	#############
 	o = checkout
-	om = checkout main
+	om = checkout master
 	ob = checkout -b
 	opr = !sh -c 'git fo pull/$1/head:pr-$1 && git o pr-$1'
 	#############
@@ -169,10 +152,10 @@
 	psfo = push -f origin
 	psuo = push -u origin
 	#############
-	psom = push origin main
-	psaom = push --all origin main
-	psfom = push -f origin main
-	psuom = push -u origin main
+	psom = push origin master
+	psaom = push --all origin master
+	psfom = push -f origin master
+	psuom = push -u origin master
 	psoc = !git push origin $(git bc)
 	psaoc = !git push --all origin $(git bc)
 	psfoc = !git push -f origin $(git bc)
@@ -184,15 +167,15 @@
 	#############
 	plo = pull origin
 	pbo = pull --rebase origin
-	plom = pull origin main
+	plom = pull origin master
 	ploc = !git pull origin $(git bc)
-	pbom = pull --rebase origin main
+	pbom = pull --rebase origin master
 	pboc = !git pull --rebase origin $(git bc)
 	#############
 	plu = pull upstream
-	plum = pull upstream main
+	plum = pull upstream master
 	pluc = !git pull upstream $(git bc)
-	pbum = pull --rebase upstream main
+	pbum = pull --rebase upstream master
 	pbuc = !git pull --rebase upstream $(git bc)
 	#############
 	rb = rebase
@@ -209,7 +192,7 @@
 	rehh = reset --hard HEAD
 	remh = reset --mixed HEAD
 	resh = reset --soft HEAD
-	rehom = reset --hard origin/main
+	rehom = reset --hard origin/master
 	#############
 	r = remote
 	ra = remote add
@@ -257,7 +240,7 @@
 	subadd = !sh -c 'git submodule add git://github.com/$1 $2/$(basename $1)' -
 	subrm = !sh -c 'git submodule deinit -f -- $1 && rm -rf .git/modules/$1 && git rm -f $1' -
 	subup = submodule update --init --recursive
-	subpull = !git submodule foreach git pull --tags -f origin main
+	subpull = !git submodule foreach git pull --tags -f origin master
 	#############
 	assume = update-index --assume-unchanged
 	unassume = update-index --no-assume-unchanged
@@ -268,7 +251,7 @@
 	bump = !sh -c 'git commit -am \"Version bump v$1\" && git psuoc && git release $1' -
 	release = !sh -c 'git tag v$1 && git pst' -
 	unrelease = !sh -c 'git tag -d v$1 && git pso :v$1' -
-	merged = !sh -c 'git o main && git plom && git bd $1 && git rpo' -
+	merged = !sh -c 'git o master && git plom && git bd $1 && git rpo' -
 	aliases = !git config -l | grep alias | cut -c 7-
 	snap = !git stash save 'snapshot: $(date)' && git stash apply 'stash@{0}'
 	bare = !sh -c 'git symbolic-ref HEAD refs/heads/$1 && git rm --cached -r . && git clean -xfd' -
@@ -280,23 +263,19 @@
 	#############
 	ours = "!f() { git checkout --ours $@ && git add $@; }; f"
 	theirs = "!f() { git checkout --theirs $@ && git add $@; }; f"
-	subrepo = !sh -c 'git filter-branch --prune-empty --subdirectory-filter $1 main' -
+	subrepo = !sh -c 'git filter-branch --prune-empty --subdirectory-filter $1 master' -
 	human = name-rev --name-only --refs=refs/heads/*
-
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
-    required = true
-
+	required = true
 [difftool "sourcetree"]
 	cmd = opendiff \"$LOCAL\" \"$REMOTE\"
 	path = 
-
 [remote "origin"]
 	url = https://github.com/Homebrew/brew
 	fetch = +refs/heads/*:refs/remotes/origin/*
-
 [homebrew]
 	analyticsmessage = true
 	caskanalyticsmessage = true

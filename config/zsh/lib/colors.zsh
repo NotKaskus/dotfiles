@@ -10,3 +10,4 @@ if type -p dircolors &>/dev/null; then
     eval "$(dircolors -b "${XDG_CONFIG_HOME}/dircolors")" || \
     eval "$(dircolors -b)"
 fi
+

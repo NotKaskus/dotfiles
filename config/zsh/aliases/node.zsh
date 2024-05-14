@@ -53,6 +53,7 @@ alias yv='print_node_versions' # Print versions of Node.js and related packages
 alias yarn-nuke='reinstall_modules' # Fully remove and reinstall node_modules
 alias repo='open_repo' # Opens the current remote Git repository in the browser
 alias npmo='open-npm' # Open given NPM module in browser
+alias opmdn='open-mdn' # Open MDN in browser
 alias nodeo='node-docs' # Open Node.js docs for specific function in browser
 
 # Enable auto-Node version switching, based on .nvmrc file in current directory
@@ -81,8 +82,13 @@ reinstall_modules () {
     check-and-remove 'node_modules'
     check-and-remove 'yarn.lock'
     check-and-remove 'package-lock.json'
-    # Reinstall with yarn (or NPM)
-    if hash 'yarn' 2> /dev/null; then
+    check-and-remove 'bun-lock.json'
+
+    # Reinstall with yarn (or NPM or bun)
+		if hash 'bun' 2> /dev/null; then
+			echo -e "\e[35mReinstalling with yarn...\e[0m"
+			bun
+    elif hash 'yarn' 2> /dev/null; then
       echo -e "\e[35mReinstalling with yarn...\e[0m"
       yarn
       echo -e "\e[35mCleaning Up...\e[0m"
@@ -91,7 +97,7 @@ reinstall_modules () {
       echo -e "\e[35mReinstalling with NPM...\e[0m"
       npm install
     else
-      echo -e "🚫\033[0;91m Unable to proceed, yarn/ npm not installed\e[0m"
+      echo -e "🚫\033[0;91m Unable to proceed, yarn, bun or npm not installed\e[0m"
     fi
   else
     # Cancelled by user
@@ -235,4 +241,14 @@ open_repo() {
     else
         echo "No remote repository found."
     fi
+}
+
+open-mdn() {
+	local search_term=${1:-}
+	if [ -z "$search_term" ]; then
+		echo "No search term provided."
+		return
+	fi
+	local mdn_url="https://developer.mozilla.org/en-US/search?q=$search_term"
+	$(launch-url $mdn_url)
 }

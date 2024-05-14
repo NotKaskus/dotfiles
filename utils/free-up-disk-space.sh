@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+# 📊 Free up disk space      
+# Includes the following tasks:                        
+# - Cleaning package cache for various package managers
+# - Removing orphaned and unused packages and binaries 
+# - Setting logging preferences and removing old logs  
+# - Removing local cache files for the current user    
+# - Deleting broken symlinks and empty files + folders 
+# - Finding and deleting duplicated large files    
+
 # Color Variables
 CYAN_B='\033[1;96m'
 YELLOW_B='\033[1;93m'

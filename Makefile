@@ -1,2 +1,2 @@
 install:
-	'./run-install.sh'
+	'./install.sh'

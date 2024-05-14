@@ -1,5 +1,3 @@
-# See https://ttssh2.osdn.jp/manual/4/en/usage/tips/vim.html for cursor shapes
-
 cursor_block='\e[2 q'
 cursor_beam='\e[6 q'
 

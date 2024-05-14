@@ -1,4 +1,3 @@
-
 # If an alias for the command just run exists, then show tip
 preexec_alias-finder() {
   tip=$(alias | grep -E "=$1$" | head -1)

@@ -1,4 +1,3 @@
-
 # Expands all glob expressions, subcommands and aliases (including global)
 # Inspired by: https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/globalias
 

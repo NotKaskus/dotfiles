@@ -1,4 +1,3 @@
-
 command_exists () {
   hash "$1" 2> /dev/null
 }
@@ -179,12 +178,12 @@ alias worldinternet='curl https://status.plaintext.sh/t'
 # Random lolz
 alias cls='clear;ls' # Clear and ls
 alias plz="fc -l -1 | cut -d' ' -f2- | xargs sudo" # Re-run last cmd as root
-alias yolo='git add .; git commit -m "YOLO"; git push origin main'
+alias yolo='git add .; git commit -m "YOLO"; git push origin master'
 alias when='date' # Show date
 alias whereami='pwd'
 alias dog='cat'
 alias gtfo='exit'
 
 # Alias for install script
-alias dotfiles="${DOTFILES_DIR:-$HOME/Documents/config/dotfiles}/run-install.sh"
+alias dotfiles="${DOTFILES_DIR:-$HOME/Documents/config/dotfiles}/install.sh"
 alias dots="dotfiles"

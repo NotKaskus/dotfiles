@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 
+################################################################
+# 📜 Debian/ Ubuntu, apt Package Install / Update Script       #
+################################################################
+# Installs listed packages on Debian-based systems via apt-get #
+# Also updates the cache database and existing applications    #
+# Confirms apps aren't installed via different package manager #
+# Doesn't include desktop apps, that're managed via Flatpak    #
+# Apps are sorted by category, and arranged alphabetically     #
+# Be sure to delete / comment out anything you do not need     #
+# For more info, see: https://wiki.debian.org/Apt              #
+################################################################
+# MIT Licensed (C) Alicia Sykes 2023 <https://aliciasykes.com> #
+################################################################
+
 # Apps to be installed via apt-get
 debian_apps=(
   # Essentials
@@ -10,24 +24,28 @@ debian_apps=(
   'wget'          # Download files
 
   # CLI Power Basics
+  'aria2'         # Resuming download util (better wget)
+  'bat'           # Output highlighting (better cat)
   'ctags'         # Indexing of file info + headers
   'exa'           # Listing files with info (better ls)
   'fzf'           # Fuzzy file finder and filtering
   'jq'            # JSON parser, output and query files
   'most'          # Multi-window scroll pager (better less)
+  'ripgrep'       # Searching within files (better grep)
   'scrot'         # Screenshots programmatically via CLI
   'thefuck'       # Auto-correct miss-typed commands
   'tree'          # Directory listings as tree structure
+  'trash-cli'     # Record and restore removed files
   'xsel'          # Copy paste access to the X clipboard
-  'rip'           # Deletion tool (better rm)
 
   # Languages, compilers, runtimes, etc
-  'node'           # Node.js
-  'nvm'            # Switching node versions
+  'golang'
 
   # Security Utilities
+  'clamav'        # Open source virus scanning suite
+  'git-crypt'     # Transparent encryption for git repos
   'openssl'       # Cryptography and SSL/TLS Toolkit
-  'rkhunter'      # Search / detect potential root kits
+  'rkhunter'      # Search/detect potential root kits
 
   # Monitoring, management and stats
   'bmon'          # Bandwidth utilization monitor
@@ -41,28 +59,6 @@ debian_apps=(
   'figlet'        # Outputs text as 3D ASCII word art
   'lolcat'        # Rainbow colored terminal output
   'neofetch'      # Show off distro and system info
-)
-
-declare -A additional_apps
-
-additional_apps=(
-  "aria2"
-  "broot"
-  "diff-so-fancy"
-  "bat"
-  "just"
-  "zoxide"
-  "tealdeer"
-  "hyperfine"
-  "procs"
-  "ripgrep"
-  "sd"
-  "tokei"
-  "trash-cli"
-  "clamav"
-  "cryptsetup"
-  "gnupg"
-  "starship"
 )
 
 ubuntu_repos=(
@@ -93,8 +89,7 @@ if [[ $* == *"--auto-yes"* ]]; then
 fi
 
 # Print intro message
-# TODO: Add windows support soon
-echo -e "${PURPLE}Starting Debian / Ubuntu package install & update script"
+echo -e "${PURPLE}Starting Debian/ Ubuntu package install & update script"
 echo -e "${YELLOW}Before proceeding, ensure your happy with all the packages listed in \e[4m${0##*/}"
 echo -e "${RESET}"
 
@@ -114,10 +109,6 @@ if ! hash apt 2> /dev/null; then
   echo "${YELLOW_B}apt doesn't seem to be present on your system. Exiting...${RESET}"
   exit 1
 fi
-
-# Update apt-get
-echo -e "${PURPLE}Updating apt-get...${RESET}"
-sudo apt update && sudo apt upgrade -y
 
 # Enable upstream package repositories
 echo -e "${CYAN_B}Would you like to enable listed repos? (y/N)${RESET}\n"
@@ -178,6 +169,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   for app in ${debian_apps[@]}; do
     if hash "${app}" 2> /dev/null; then
       echo -e "${YELLOW}[Skipping]${LIGHT} ${app} is already installed${RESET}"
+    elif hash flatpak 2> /dev/null && [[ ! -z $(echo $(flatpak list --columns=ref | grep $app)) ]]; then
+      echo -e "${YELLOW}[Skipping]${LIGHT} ${app} is already installed via Flatpak${RESET}"
     else
       echo -e "${PURPLE}[Installing]${LIGHT} Downloading ${app}...${RESET}"
       sudo apt install ${app} --assume-yes
@@ -185,30 +178,6 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   done
 fi
 
-# Prompt user to install all listed apps
-echo -e "${CYAN_B}Would you like to install additional apps? (y/N)${RESET}\n"
-read -t $PROMPT_TIMEOUT -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  echo -e "${PURPLE}Starting install...${RESET}"
-  # Install NVM
-  if hash "nvm" 2> /dev/null; then
-    echo -e "${YELLOW}[Skipping]${LIGHT} NVM is already installed${RESET}"
-  else
-    echo -e "${PURPLE}[Installing]${LIGHT} Downloading NVM...${RESET}"
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
-  fi
-
-  for software in "${!additional_apps[@]}"; do
-    if hash "${software}" 2> /dev/null; then
-      echo -e "${YELLOW}[Skipping]${LIGHT} ${software} is already installed${RESET}"
-    else
-      echo -e "${PURPLE}[Installing]${LIGHT} Downloading ${software}...${RESET}"
-      brew install "${software}"
-    fi
-  done
-fi
-
-echo -e "${PURPLE}Finished installing / updating Debian/Ubuntu packages.${RESET}"
+echo -e "${PURPLE}Finished installing / updating Debian packages.${RESET}"
 
 # EOF

@@ -4,7 +4,7 @@
 PARAMS=$* # User-specified parameters
 CURRENT_DIR=$(cd "$(dirname ${BASH_SOURCE[0]})" && pwd)
 SYSTEM_TYPE=$(uname -s) # Get system type - Linux / MacOS (Darwin)
-PROMPT_TIMEOUT=30 # When user is prompted for input, skip after x seconds
+PROMPT_TIMEOUT=15 # When user is prompted for input, skip after x seconds
 START_TIME=`date +%s` # Start timer
 SRC_DIR=$(dirname ${0})
 
@@ -27,7 +27,7 @@ GREEN_B='\033[1;32m'
 PLAIN_B='\033[1;37m'
 RESET='\033[0m'
 GREEN='\033[0;32m'
-PURPLE='\033[0;35m'
+BLUE='\036[0;35m'
 
 # Clear the screen
 if [[ ! $PARAMS == *"--no-clear"* ]] && [[ ! $PARAMS == *"--help"* ]] ; then
@@ -57,9 +57,41 @@ make_banner () {
 make_intro () {
   C2="\033[0;35m"
   C3="\x1b[2m"
-  echo -e "${CYAN_B}The seup script will do the following:${RESET}\n"\
+  echo -e "${CYAN_B}The setup script will do the following:${RESET}\n"\
   "${C2}(1) Pre-Setup Tasls\n"\
-  "  ${C3}- Change Me Later\n"
+  "  ${C3}- Check that all requirements are met, and system is compatible\n"\
+  "  ${C3}- Sets environmental variables from params, or uses sensible defaults\n"\
+  "  ${C3}- Output welcome message and summary of changes\n"\
+  "${C2}(2) Setup Dotfiles\n"\
+  "  ${C3}- Clone or update dotfiles from git\n"\
+  "  ${C3}- Symlinks dotfiles to correct locations\n"\
+  "${C2}(3) Install packages\n"\
+  "  ${C3}- On Debian Linux, updates and installs packages via apt get\n"\
+  "  ${C3}- Install additional packages that is not available via apt get command using brew\n"\
+  "  ${C3}- Checks that OS is up-to-date and critical patches are installed\n"\
+  "${C2}(4) Configure system\n"\
+  "  ${C3}- Setup Vim, and install / update Vim plugins via Plug\n"\
+  "  ${C3}- Setup Tmux, and install / update Tmux plugins via TPM\n"\
+  "  ${C3}- Setup ZSH, and install / update ZSH plugins via Antigen\n"\
+  "${C2}(5) Finishing Up\n"\
+  "  ${C3}- Refresh current terminal session\n"\
+  "  ${C3}- Print summary of applied changes and time taken\n"\
+  "  ${C3}- Exit with appropriate status code\n\n"\
+  "${PURPLE}You will be prompted at each stage, before any changes are made.${RESET}\n"\
+  "${PURPLE}For more info, see GitHub: \033[4;35mhttps://github.com/${REPO_NAME}${RESET}"
+}
+
+# Cleanup tasks, run when the script exits
+cleanup () {
+  # Reset tab color and title (iTerm2 only)
+  echo -e "\033];\007\033]6;1;bg;*;default\a"
+
+  # Unset re-used variables
+  unset PROMPT_TIMEOUT
+  unset AUTO_YES
+
+  # dinosaurs are awesome
+  echo "🦖"
 }
 
 # Checks if a given package is installed
@@ -76,13 +108,16 @@ terminate () {
 # Checks if command / package (in $1) exists and then shows
 # either shows a warning or error, depending if package required ($2)
 system_verify () {
-  if ! command_exists $1; then
+  if ! command_exists $1 && [ $1 != "brew" ]; then
     if $2; then
       echo -e "🚫 ${RED_B}Error:${PLAIN_B} $1 is not installed${RESET}"
       terminate
     else
       echo -e "⚠️  ${YELLOW_B}Warning:${PLAIN_B} $1 is not installed${RESET}"
     fi
+  elif [ $dep == "brew" ] && [ ! -d "/home/linuxbrew/.linuxbrew/bin" ]; then
+    echo -e "🚫 ${RED_B}Error:${PLAIN_B} $1 is not installed${RESET}"
+    terminate
   fi
 }
 
@@ -109,10 +144,43 @@ function pre_setup_tasks () {
   fi
   echo
 
+	core_deps=(
+    'git'
+    'zsh'
+    'brew'
+  )
+
+  # If any core_deps are not installed, run pre-install script
+  for dep in "${core_deps[@]}"; do
+    if ! command_exists $dep && [ $dep != 'brew' ]; then
+      echo -e "${YELLOW_B}Core dependency ${dep} not found. Running pre-install script...${RESET}"
+      bash <(curl -s https://raw.githubusercontent.com/NotKaskus/dotfiles/main/scripts/installation/pre-install.sh)
+      break
+    elif [ $dep == 'brew' ] && [ ! -d "/home/linuxbrew/.linuxbrew/bin" ]; then
+      echo -e "${YELLOW_B}Core dependency ${dep} not found. Running pre-install script...${RESET}"
+      brew_url='https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh'
+      /bin/bash -c "$(curl -fsSL $brew_url)"
+      
+      # Add Path
+      export BREW_HOME="/home/linuxbrew/.linuxbrew/bin"
+      export PATH="$PATH:$BREW_HOME"
+
+      if [ -f "$HOME/.bashrc" ]; then
+        (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> "$HOME/.bashrc"
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      fi
+
+      if [ -f "$HOME/.zshrc" ]; then
+        (echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> "$HOME/.zshrc"
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      fi
+    fi
+  done
+
   # Verify required packages are installed
   system_verify "git" true
+  system_verify "zsh" true
   system_verify "brew" true
-  system_verify "zsh" false
   system_verify "vim" false
   system_verify "nvim" false
   system_verify "tmux" false
@@ -133,18 +201,21 @@ function pre_setup_tasks () {
     "defaulting to $HOME/.dotfiles\n"\
     "${CYAN_B}To specify where you'd like dotfiles to be downloaded to,"\
     "set the DOTFILES_DIR environmental variable, and re-run.${RESET}"
-    DOTFILES_DIR="${HOME}/.dotfiles"
+		DOTFILES_DIR="${HOME}/.dotfiles"
   fi
 }
 
 # Downloads / updates dotfiles and symlinks them
 function setup_dot_files () {
+
   # If dotfiles not yet present, clone the repo
   if [[ ! -d "$DOTFILES_DIR" ]]; then
-    echo -e "${PURPLE}Dotfiles not yet present. Downloading %s into %s${RESET}\n" "$REPO_NAME" "$DOTFILES_DIR"
-    echo -e "${YELLOW_B}You can change where dotfiles will be saved to, by setting the DOTFILES_DIR env var${RESET}\n"
-    mkdir -p "${DOTFILES_DIR}"
-    git clone --force --recursive "${DOTFILES_REPO}" "${DOTFILES_DIR}" && \
+    echo -e "${PURPLE}Dotfiles not yet present."\
+    "Downloading ${REPO_NAME} into ${DOTFILES_DIR}${RESET}"
+    echo -e "${YELLOW_B}You can change where dotfiles will be saved to,"\
+    "by setting the DOTFILES_DIR env var${RESET}"
+    mkdir -p "${DOTFILES_DIR}" && \
+    git clone --recursive ${DOTFILES_REPO} ${DOTFILES_DIR} && \
     cd "${DOTFILES_DIR}"
   else # Dotfiles already downloaded, just fetch latest changes
     echo -e "${PURPLE}Pulling changes from ${REPO_NAME} into ${DOTFILES_DIR}${RESET}"
@@ -171,14 +242,13 @@ function setup_dot_files () {
 
 # Applies application-specific preferences, and runs some setup tasks
 function apply_preferences () {
-
   # If ZSH not the default shell, ask user if they'd like to set it
   if [[ $SHELL != *"zsh"* ]] && command_exists zsh; then
     echo -e "\n${CYAN_B}Would you like to set ZSH as your default shell? (y/N)${RESET}"
     read -t $PROMPT_TIMEOUT -n 1 -r ans_zsh
     if [[ $ans_zsh =~ ^[Yy]$ ]] || [[ $AUTO_YES = true ]] ; then
       echo -e "${PURPLE}Setting ZSH as default shell${RESET}"
-      sudo chsh -s $(which zsh) $USER
+      chsh -s $(which zsh) $USER
     fi
   fi
 
@@ -193,14 +263,15 @@ function apply_preferences () {
     # Install / update Tmux plugins with TPM
     echo -e "${PURPLE}Installing TMUX Plugins${RESET}"
     chmod ug+x "${XDG_DATA_HOME}/tmux/tpm"
-    bash "${TMUX_PLUGIN_MANAGER_PATH}/tpm/bin/install_plugins"
-    bash "${XDG_DATA_HOME}/tmux/plugins/tpm/bin/install_plugins"
+    sh "${TMUX_PLUGIN_MANAGER_PATH}/tpm/bin/install_plugins"
+    sh "${XDG_DATA_HOME}/tmux/plugins/tpm/bin/install_plugins"
 
     # Install / update ZSH plugins with Antigen
     echo -e "${PURPLE}Installing ZSH Plugins${RESET}"
     /bin/zsh -i -c "antigen update && antigen-apply"
   fi
 }
+
 
 # Based on system type, uses appropriate package manager to install / updates apps
 function install_packages () {
@@ -211,12 +282,28 @@ function install_packages () {
     return
   fi
   if [ -f "/etc/debian_version" ]; then
+		# Install packages usig homebrew
+		# Update / Install the Homebrew packages in ~/.Brewfile
+		if [ -d "/home/linuxbrew/.linuxbrew/bin" ] && [ -f "$DOTFILES_DIR/scripts/installs/Brewfile" ]; then
+			echo -e "\n${PURPLE}Updating homebrew and packages...${RESET}"
+			/home/linuxbrew/.linuxbrew/bin/brew update # Update Brew to latest version
+			/home/linuxbrew/.linuxbrew/bin/brew upgrade # Upgrade all installed casks
+			/home/linuxbrew/.linuxbrew/bin/brew bundle --global --file $HOME/.Brewfile # Install all listed Brew apps
+			/home/linuxbrew/.linuxbrew/bin/brew cleanup # Remove stale lock files and outdated downloads
+		else
+			echo -e "${PURPLE}Skipping Homebrew installation as requirements not met${RESET}"
+		fi
+
     # Debian / Ubuntu
-    debian_pkg_install_script="${DOTFILES_DIR}/scripts/installs/debian-apt.sh"
+		# Install packages using apt
+    debian_pkg_install_script="${DOTFILES_DIR}/scripts/installation/debian-apt.sh"
     chmod +x $debian_pkg_install_script
     $debian_pkg_install_script $PARAMS
+	else
+		# Terminate cause system not supported TODO: Add windows support for installation
+		echo -e "${RED_B}System not supported. Terminating...${RESET}"
+		terminate
   fi
-	# TODO: Add support for windows installation
 }
 
 # Updates current session, and outputs summary

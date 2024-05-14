@@ -16,5 +16,5 @@ else
   fi
 fi
 
-# Set the ZSH prompt
-# Set the source to oh-my-posh
+# Set the ZSH prompt to oh-my-posh
+# antigen theme romkatv/powerlevel10k

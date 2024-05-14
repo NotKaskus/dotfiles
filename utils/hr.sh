@@ -2,6 +2,7 @@
 
 # Simple script to output a solid line in the terminal
 # Useful for marking the end of a task in your bash log
+# Inspired by @LuRsT's script of the same name
 
 # Determine width of terminal
 hr_col_count="$(tput cols)"
